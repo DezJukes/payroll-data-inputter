@@ -33,42 +33,70 @@ def automate_csv():
     stop_button.config(state="normal")
     start_button.config(state="disabled")
 
-    # Open your CSV file
-    with open(file_path, newline='') as csvfile:
-        reader = csv.reader(csvfile)
+    last_account_num = None
+    last_employee_name = None
 
-        # Give yourself some time to open the app and place cursor
-        time.sleep(15)
+    try:
+        # Open your CSV file
+        with open(file_path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
 
-        for row in reader:
-            if not is_running:
-                break
+            # Give yourself some time to open the app and place cursor
+            time.sleep(15)
 
-            account_num = row[0]
-            employee_name = row[1]
-            payroll_amount = row[2]
+            for row in reader:
+                if not is_running:
+                    break
 
-            # Click or tab to the Account Number field and type
-            pyautogui.click(x=937, y=507)  # Update with your coordinates
-            pyautogui.write(account_num)
+                account_num = row[0]
+                employee_name = row[1]
+                payroll_amount = row[2]
 
-            pyautogui.press('tab')
-            pyperclip.copy(employee_name)
-            pyautogui.hotkey("ctrl", "v")
+                try:
+                    # Click or tab to the Account Number field and type
+                    pyautogui.click(x=937, y=507)  # Update with your coordinates
+                    pyautogui.write(account_num)
 
-            # Tab or click to Payroll Amount
-            pyautogui.press('tab')
-            pyautogui.write(payroll_amount)
+                    pyautogui.press('tab')
+                    time.sleep(1)
+                    pyperclip.copy(employee_name)
+                    pyautogui.hotkey("ctrl", "v")
 
-            # Click Save button (or press Enter)
-            pyautogui.press('tab')  # If tab goes to Save button
-            pyautogui.press('enter')
+                    # Tab or click to Payroll Amount
+                    pyautogui.press('tab')
+                    pyautogui.write(payroll_amount)
 
-            # Wait for the form to reset or process
-            time.sleep(1)
+                    # Click Save button (or press Enter)
+                    pyautogui.press('tab')  # If tab goes to Save button
+                    pyautogui.press('enter')
+
+                    # Wait for the form to reset or process
+                    time.sleep(1)
+
+                    # Update last successful entries
+                    last_account_num = account_num
+                    last_employee_name = employee_name
+
+                except Exception as e:
+                    error_msg = f"Error occurred while processing:\n\n"
+                    error_msg += f"Current Row - Account: {account_num}, Employee: {employee_name}\n\n"
+                    if last_account_num is not None:
+                        error_msg += f"Last Successful - Account: {last_account_num}, Employee: {last_employee_name}\n\n"
+                    error_msg += f"Error Details: {str(e)}"
+                    
+                    is_running = False
+                    progress_label.config(text="Automation stopped due to error.")
+                    stop_button.config(state="disabled")
+                    start_button.config(state="normal")
+                    messagebox.showerror("Automation Error", error_msg)
+                    return
+
+    except Exception as e:
+        messagebox.showerror("File Error", f"Error reading CSV file:\n{str(e)}")
 
     is_running = False
-    progress_label.config(text="Automation completed.")
+    if is_running == False and progress_label.cget("text") == "Automation in progress...":
+        progress_label.config(text="Automation completed.")
     stop_button.config(state="disabled")
     start_button.config(state="normal")
 
